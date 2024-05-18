@@ -13,6 +13,7 @@ window = pygame.display.set_mode((WIDTH, HEIGHT))
 
 class Player(pygame.sprite.Sprite):
     COLOR = (255, 0, 0)
+    GRAVITY = 1
 
     def __init__(self, x, y, width, height):
         # initialize the super class
@@ -25,6 +26,8 @@ class Player(pygame.sprite.Sprite):
 
         self.direction = "left"
         self.animation_count = 0
+
+        self.fall_count = 0
 
     def move(self, dx, dy):
         self.rect.x += dx
@@ -44,6 +47,10 @@ class Player(pygame.sprite.Sprite):
 
     def loop(self, fps):
         """Called on every game loop tick; moves the player"""
+        # apply gravity
+        self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY)
+        self.fall_count += 1
+
         self.move(self.x_vel, self.y_vel)
 
     def draw(self, window):
