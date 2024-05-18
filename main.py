@@ -90,10 +90,19 @@ class Player(pygame.sprite.Sprite):
             self.direction = "right"
             self.animation_count = 0
 
+    def landed(self):
+        self.fall_count = 0
+        self.y_vel = 0
+        self.jump_count = 0
+
+    def hit_head(self):
+        self.count = 0
+        self.y_vel *= -1
+
     def loop(self, fps):
         """Called on every game loop tick; moves the player"""
         # apply gravity
-        # self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY)
+        self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY)
         self.move(self.x_vel, self.y_vel)
 
         self.fall_count += 1
@@ -175,7 +184,23 @@ def draw(window, background, bg_image, player, objects):
     pygame.display.update()
 
 
-def handle_move(player):
+def handle_vertical_collision(player, objects, y_vel):
+    collided_objects = []
+    for obj in objects:
+        if pygame.sprite.collide_mask(player, obj):
+            if y_vel > 0:  # falling
+                player.rect.bottom = obj.rect.top
+                player.landed()
+            elif y_vel < 0:  # jumping
+                player.rect.top = obj.rect.bottom
+                player.hit_head()
+
+            collided_objects.append(obj)
+
+    return collided_objects
+
+
+def handle_move(player, objects):
     # `keys` is a tuple of boolean values; each position corresponds to a key
     keys = pygame.key.get_pressed()
 
@@ -186,6 +211,8 @@ def handle_move(player):
         player.move_left(PLAYER_VEL)
     if keys[pygame.K_RIGHT]:
         player.move_right(PLAYER_VEL)
+
+    handle_vertical_collision(player, objects, player.y_vel)
 
 
 def main(window):
@@ -215,8 +242,9 @@ def main(window):
                 running = False
                 break
 
-        handle_move(player)  # process player-level input
+        # player.loop must preceed handle_move so mask is not None
         player.loop(FPS)  # update player
+        handle_move(player, objects)  # process player-level input
         draw(window, background, bg_image, player, objects)  # draw new frame
 
     pygame.quit()
