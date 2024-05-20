@@ -55,6 +55,7 @@ def load_block(size):
 class Player(pygame.sprite.Sprite):
     COLOR = (255, 0, 0)
     GRAVITY = 1
+    JUMP_MAGNITUDE = 8
     SPRITES = load_sprite_sheets("MainCharacters", "NinjaFrog", 32, 32, direction=True)
     ANIMATION_DELAY = 3
 
@@ -73,6 +74,7 @@ class Player(pygame.sprite.Sprite):
         self.mask = None
 
         self.fall_count = 0
+        self.jump_count = 0
 
     def move(self, dx, dy):
         self.rect.x += dx
@@ -89,6 +91,14 @@ class Player(pygame.sprite.Sprite):
         if self.direction != "right":
             self.direction = "right"
             self.animation_count = 0
+
+    def jump(self):
+        self.y_vel = -self.GRAVITY * self.JUMP_MAGNITUDE
+        self.animation_count = 0
+
+        self.jump_count += 1
+        if self.jump_count == 1:
+            self.fall_count = 0
 
     def landed(self):
         self.fall_count = 0
@@ -241,6 +251,9 @@ def main(window):
             if event.type == pygame.QUIT:
                 running = False
                 break
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE and player.jump_count < 2:
+                    player.jump()
 
         # player.loop must preceed handle_move so mask is not None
         player.loop(FPS)  # update player
